@@ -1,0 +1,26 @@
+[Plugin]
+name = YouTube去广告
+desc = 支持去广告、画中画（PIP）、后台播放。
+author = Maasea
+homepage = https://whatshub.top
+icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png
+
+[Rule]
+# 拦截 UDP 流量以强制回落到 TCP，确保 MITM 脚本生效 (阻断 QUIC)
+AND, ((DOMAIN-SUFFIX, googlevideo.com), (PROTOCOL, UDP)), REJECT
+AND, ((DOMAIN, youtubei.googleapis.com), (PROTOCOL, UDP)), REJECT
+
+[Rewrite]
+# 移除部分广告链接
+^https?:\/\/[\w-]+\.googlevideo\.com\/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
+^https?:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad _ reject-200
+^https?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads _ reject-200
+^https?:\/\/(www|s)\.youtube\.com\/(pagead|ptracking) _ reject-200
+^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?adcontext _ reject-200
+
+[Script]
+# YouTube 增强脚本
+http-response ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch) script-path=https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.response.js, requires-body=true, binary-body-mode=true, max-size=-1, tag=YouTube增强, argument="{ \"lyricLang\": \"zh-Hans\", \"captionLang\": \"zh-Hans\", \"blockUpload\": true, \"blockImmersive\": true, \"debug\": false }"
+
+[MITM]
+hostname = *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com
